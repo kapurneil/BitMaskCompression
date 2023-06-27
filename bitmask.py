@@ -55,7 +55,7 @@ class Encoder:
             self.bytes = f.read()
         
         #iterate through bytes
-        current_byte = 2
+        current_byte = 1
         values = []
         max_int_size = 0
         while current_byte < totalElements:
@@ -117,7 +117,63 @@ class Encoder:
 class Decoder:
     def __init__(self, file_name):
         self.file_name = file_name
+        first_byte_int = 0
+
+        #open file and get collection of bytes
+        with open(self.file_name, 'rb') as f: 
+            self.encoded_bytes = f.read()
+
+        first_byte = self.encoded_bytes[0]
+        first_byte_int = int.from_bytes(first_byte, "little")
+            
+
+        #get metadata
+        self.int_size = (first_byte_int << 4) >> 1
+        self.last_values = (first_byte_int << 1) >> 5
+        self.file_size = os.path.getsize(self.file_name)
+
+        #get list of values
+        self.values = self.get_values()
+
         print("Decoding encoded file")
+    
+    def get_values(self):
+        values = [] #store values in array
+        byte_number = 1 #keep track of location in byte string 
+        int_s = self.int_size
+
+        #handle bytes up until last bit mask
+        while byte_number < (self.file_size - self.last_values * self.int_size - 1):
+            bit_mask = "{0:08b}".format(self.encoded_bytes[byte_number])
+            byte_number += 1
+
+            for bit in bit_mask:
+                if bit == "0":
+                    values.append(0)
+                else:
+                    current_val = int.from_bytes(self.encoded_bytes[byte_number:byte_number+int_s], "little", signed=True)
+                    values.append(current_val)
+                    byte_number += int_s
+        
+        #handle remainders
+        bit_mask = "{0:08b}".format(self.encoded_bytes[byte_number])
+        for bit_number in range(self.last_values):
+            bit = bit_mask[bit_number]
+            if bit == "0":
+                values.append(0)
+            else:
+                current_val = int.from_bytes(self.encoded_bytes[byte_number:byte_number+int_s], "little", signed=True)
+                values.append(current_val)
+                byte_number += int_s
+        
+        print("Retrieved following values from encoded file: " + self.values)
+    
+
+    def decode(self):
+        pass
+
+                
+
 
 if __name__ == "__main__":
     file_name = sys.argv[1]
