@@ -1,1 +1,1 @@
-# BitMaskEncryption
+# Bit Mask Compression
