@@ -77,7 +77,20 @@ class Encoder:
             block_bit_mask = ""
             non_zero_bytes = bytes(0)
             for i in range(8):
-                pass
+                try:
+                    element = self.values_list[list_index]
+                    block_bit_mask = "0" if element == 0 else "1"
+                    if element != 0:
+                        non_zero_bytes += int(element).to_bytes(self.max_int, "little", signed=True)
+                    list_index += 1
+                except IndexError:
+                    break
+            encoded_bytes += block_bit_mask
+            encoded_bytes += non_zero_bytes
+        
+        with open(self.file_name, 'wb') as f:
+            f.write(encoded_bytes)
+                
 
 
     
@@ -118,6 +131,6 @@ if __name__ == "__main__":
         encoded = BitTools.get_bit(first_byte_int, 7)
     
     if encoded:
-        Decoder(file_name)
+        file_decoder = Decoder(file_name)
     else:
-        Encoder(file_name)
+        file_encoder = Encoder(file_name)
