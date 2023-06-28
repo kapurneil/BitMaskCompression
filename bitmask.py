@@ -20,9 +20,44 @@ class BitTools:
     def num_bytes(num):
         bit_length = num.bit_length()
         byte_length = bit_length/8
-        if byte_length % 8 != 0: 
-            bit_length += 1
-        return byte_length
+        
+        #convert to integer
+        if byte_length % 8 == 0:
+            return int(byte_length)
+        else:
+            return int(byte_length) + 1
+
+class BinaryUtility:
+    def __init__(self, file_name):
+        self.file_name = file_name
+        self.file_ext = file_name[-3:]
+        self.values = []
+        
+        if self.file_ext == "csv":
+            self.read_from_csv()
+
+    
+    def read_from_csv(self):
+        with open(self.file_name, 'r') as f:
+            f_reader = csv.reader(f, delimiter=",")
+            read_values = list(f_reader)[0]
+            for val in read_values:
+                self.values.append(int(val))
+        print("Read CSV file with following values: ")
+        print(self.values)
+    
+    def csv_to_binary_file(self):
+        bytes_string = bytes(1)
+        for value in self.values:
+            bytes_string += int.to_bytes(value, 4, "little", signed=True)
+
+        #Write bytes string to file 
+        new_file_name = self.file_name[:-4] + ".bin"
+        with open(new_file_name, 'wb') as f:
+            f.write(bytes_string)
+        
+        print("Created binary file: " + new_file_name)
+
 
 class Encoder:
     def __init__(self, file_name):
@@ -42,9 +77,6 @@ class Encoder:
 
         file_path = self.file_name
 
-        #get total number of list elements (each integer is four bytes large and first byte holds metadata)
-        totalElements = (self.file_size - 1)/4
-
         #make sure list elements are stored properly in file
         remainder = (self.file_size-1) % 4
         if remainder: 
@@ -53,15 +85,18 @@ class Encoder:
         #open file and get bytes stored    
         with open(file_path, 'rb') as f:
             self.bytes = f.read()
-        
+    
         #iterate through bytes
         current_byte = 1
         values = []
         max_int_size = 0
-        while current_byte < totalElements:
+        while current_byte < self.file_size:
             current_block = self.bytes[current_byte:current_byte+4]
             current_byte += 4
+            print("Current block " + str(current_block))
             current_block_int = int.from_bytes(current_block, "little", signed=True)
+
+            print("Current Block Int " + str(current_block_int))
             values.append(current_block_int)
             max_int_size = max(BitTools.num_bytes(current_block_int), max_int_size)
         
@@ -85,7 +120,10 @@ class Encoder:
                     list_index += 1
                 except IndexError:
                     break
-            encoded_bytes += block_bit_mask
+            
+            #convert bitmask to bytes and add bitmask and list to encoded_bytes
+            block_mask_as_bytes = int(block_bit_mask, 2).to_bytes(1, "little")
+            encoded_bytes += block_mask_as_bytes
             encoded_bytes += non_zero_bytes
         
         with open(self.file_name, 'wb') as f:
@@ -102,6 +140,7 @@ class Encoder:
         binary_string += f'{last_values:03b}'
 
         #number of bytes stored
+        print(self.max_int)
         binary_string += f'{self.max_int:03b}'
         
         #end with a 0
@@ -169,24 +208,43 @@ class Decoder:
         print("Retrieved following values from encoded file: " + self.values)
     
 
-    def decode(self):
-        pass
+    def decode_values(self):
+        decoded_bytes = bytes(1)
+        for element in self.values:
+            decoded_bytes += int.to_bytes(element, 4, "little", signed=True)
+        
+        with open(self.file_name, 'wb') as f:
+            f.write(decoded_bytes)
+
 
                 
 
 
 if __name__ == "__main__":
     file_name = sys.argv[1]
-    bit_mask = bytes()
-    non_zero_values = []
+    file_extension = file_name[-3:]
 
-    #open file and get data
-    with open(file_name, 'rb') as file:
-        first_byte = file.read(1)
-        first_byte_int = int.from_bytes(first_byte, "little")
-        encoded = BitTools.get_bit(first_byte_int, 7)
-    
-    if encoded:
-        file_decoder = Decoder(file_name)
+    if file_extension == "csv":
+        binary_converter = BinaryUtility(file_name)
+        binary_converter.csv_to_binary_file()
+    elif file_extension == "bin":
+        bit_mask = bytes()
+        non_zero_values = []
+
+        #open file and get data
+        with open(file_name, 'rb') as file:
+            first_byte = file.read(1)
+            first_byte_int = int.from_bytes(first_byte, "little")
+            encoded = BitTools.get_bit(first_byte_int, 7)
+        
+        if encoded:
+            file_decoder = Decoder(file_name)
+            file_decoder.decode_values()
+        else:
+            file_encoder = Encoder(file_name)
+            file_encoder.encode_values()
     else:
-        file_encoder = Encoder(file_name)
+        raise Exception("Invalid file type provided.")
+
+
+    
