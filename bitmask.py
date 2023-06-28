@@ -114,11 +114,14 @@ class Encoder:
             for i in range(8):
                 try:
                     element = self.values_list[list_index]
-                    block_bit_mask = "0" if element == 0 else "1"
+                    block_bit_mask += "0" if element == 0 else "1"
                     if element != 0:
                         non_zero_bytes += int(element).to_bytes(self.max_int, "little", signed=True)
                     list_index += 1
                 except IndexError:
+                    remaining_zeros = 8 - i
+                    for j in range(remaining_zeros):
+                        block_bit_mask += "0"
                     break
             
             #convert bitmask to bytes and add bitmask and list to encoded_bytes
@@ -162,13 +165,19 @@ class Decoder:
         with open(self.file_name, 'rb') as f: 
             self.encoded_bytes = f.read()
 
-        first_byte = self.encoded_bytes[0]
-        first_byte_int = int.from_bytes(first_byte, "little")
+        first_byte_int = self.encoded_bytes[0]
+        print(first_byte_int)
             
 
-        #get metadata
-        self.int_size = (first_byte_int << 4) >> 1
-        self.last_values = (first_byte_int << 1) >> 5
+        """ get metadata 
+        1 bit - valid 
+        3 bits - last bit mask size 
+        3 bits - size of integer in bytes
+        1 bit - trailing zero
+        """
+
+        self.int_size = (first_byte_int >> 1) & int("00000111", 2)
+        self.last_values = (first_byte_int >> 4) & int("00000111", 2)
         self.file_size = os.path.getsize(self.file_name)
 
         #get list of values
@@ -182,6 +191,7 @@ class Decoder:
         int_s = self.int_size
 
         #handle bytes up until last bit mask
+        print(self.file_size - self.last_values * self.int_size - 1)
         while byte_number < (self.file_size - self.last_values * self.int_size - 1):
             bit_mask = "{0:08b}".format(self.encoded_bytes[byte_number])
             byte_number += 1
@@ -195,17 +205,22 @@ class Decoder:
                     byte_number += int_s
         
         #handle remainders
-        bit_mask = "{0:08b}".format(self.encoded_bytes[byte_number])
-        for bit_number in range(self.last_values):
-            bit = bit_mask[bit_number]
-            if bit == "0":
-                values.append(0)
-            else:
-                current_val = int.from_bytes(self.encoded_bytes[byte_number:byte_number+int_s], "little", signed=True)
-                values.append(current_val)
-                byte_number += int_s
+        if byte_number < self.file_size:
+            bit_mask = "{0:08b}".format(self.encoded_bytes[byte_number])
+            print("byte number: ", byte_number)
+            print("bit mask: ", bit_mask)
+            byte_number += 1
+            for bit_number in range(self.last_values):
+                bit = bit_mask[bit_number]
+                if bit == "0":
+                    values.append(0)
+                else:
+                    current_val = int.from_bytes(self.encoded_bytes[byte_number:byte_number+int_s], "little", signed=True)
+                    values.append(current_val)
+                    byte_number += int_s
         
-        print("Retrieved following values from encoded file: " + self.values)
+        print("Retrieved following values from encoded file: " + str(values))
+        return values
     
 
     def decode_values(self):
