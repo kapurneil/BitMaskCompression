@@ -1,6 +1,5 @@
 import os
-from bittools import BitTools
-from filetools import FileReader
+from utils.filetools import FileReader
 
 class Encoder:
     def __init__(self, file_name):

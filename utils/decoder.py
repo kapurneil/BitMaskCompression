@@ -1,5 +1,4 @@
-import os 
-from filetools import FileReader
+from utils.filetools import FileReader
 
 class Decoder:
     def __init__(self, file_name):

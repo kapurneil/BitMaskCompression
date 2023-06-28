@@ -1,4 +1,4 @@
-from bittools import BitTools
+from utils.bittools import BitTools
 import csv
 import os 
 
