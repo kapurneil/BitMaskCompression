@@ -7,8 +7,7 @@ class Encoder:
         #get file information and values
         file_size = os.path.getsize(file_name)
         values_list, max_int = FileReader.list_size_from_decoded(file_name)
-
-        print("Encoding Values")
+        
         encoded_bytes = bytes(0)
         encoded_bytes += Encoder.create_first_byte(values_list, max_int)
 
@@ -46,7 +45,6 @@ class Encoder:
         binary_string += f'{last_values:03b}'
 
         #number of bytes stored
-        print(max_int)
         binary_string += f'{max_int:03b}'
         
         #end with a 0
