@@ -2,27 +2,26 @@ import os
 from utils.filetools import FileReader
 
 class Encoder:
-    def __init__(self, file_name):
-        self.file_name = file_name
-        self.file_size = os.path.getsize(file_name)
-        self.values_list, self.max_int = FileReader.list_size_from_decoded(file_name)
-        
-    
-    def encode_values(self):
+    @staticmethod
+    def encode_bin_file(file_name):
+        #get file information and values
+        file_size = os.path.getsize(file_name)
+        values_list, max_int = FileReader.list_size_from_decoded(file_name)
+
         print("Encoding Values")
         encoded_bytes = bytes(0)
-        encoded_bytes += self.create_first_byte()
+        encoded_bytes += Encoder.create_first_byte(values_list, max_int)
 
         list_index = 0
-        while list_index < len(self.values_list):
+        while list_index < len(values_list):
             block_bit_mask = ""
             non_zero_bytes = bytes(0)
             for i in range(8):
                 try:
-                    element = self.values_list[list_index]
+                    element = values_list[list_index]
                     block_bit_mask += "0" if element == 0 else "1"
                     if element != 0:
-                        non_zero_bytes += int(element).to_bytes(self.max_int, "little", signed=True)
+                        non_zero_bytes += int(element).to_bytes(max_int, "little", signed=True)
                     list_index += 1
                 except IndexError:
                     remaining_zeros = 8 - i
@@ -35,19 +34,20 @@ class Encoder:
             encoded_bytes += block_mask_as_bytes
             encoded_bytes += non_zero_bytes
         
-        with open(self.file_name, 'wb') as f:
+        with open(file_name, 'wb') as f:
             f.write(encoded_bytes)
     
-    def create_first_byte(self):
+    @staticmethod
+    def create_first_byte(values_list, max_int):
         binary_string = "1" #left most bit signifies encoded
 
         #values will be encoded in chunks of 8, last chunk may have less than 8 so first byte specifies this
-        last_values = len(self.values_list) % 8 
+        last_values = len(values_list) % 8 
         binary_string += f'{last_values:03b}'
 
         #number of bytes stored
-        print(self.max_int)
-        binary_string += f'{self.max_int:03b}'
+        print(max_int)
+        binary_string += f'{max_int:03b}'
         
         #end with a 0
         binary_string += "0"

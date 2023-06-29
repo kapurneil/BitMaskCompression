@@ -9,13 +9,11 @@ if __name__ == "__main__":
 
     if file_type == "encoded":
         print("Decoding encoded file")
-        file_decoder = Decoder(file_name)
-        file_decoder.decode_values()
+        Decoder.decode_bin_file(file_name)
         print("Decoding complete")
     elif file_type == "decoded":
         print("Encoding decoded file")
-        file_encoder = Encoder(file_name)
-        file_encoder.encode_values()
+        Encoder.encode_bin_file(file_name)
         print("Encoding complete")
     elif file_type == "csv":
         #convert to binary
@@ -25,8 +23,7 @@ if __name__ == "__main__":
 
         #encode file 
         print("Encoding file: " + new_file)
-        file_encoder = Encoder(new_file)
-        file_encoder.encode_values()
+        Encoder.encode_bin_file(new_file)
     else:
         print("Invalid file.")
 
