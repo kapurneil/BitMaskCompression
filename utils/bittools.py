@@ -1,7 +1,7 @@
 class BitTools:
     @staticmethod
     def get_bit(byte_chunk, bit_number):
-        return byte_chunk >> bit_number
+        return (byte_chunk & (1 << bit_number)) >> bit_number
     
     @staticmethod
     def set_bit(byte_chunk, bit_number):
