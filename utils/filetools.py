@@ -145,17 +145,27 @@ class FileConverter:
     def csv_to_binary_file(file_name):
         #get data from file
         values = FileReader.list_from_csv(file_name)
-
+        return FileConverter.array_to_binary_file(values, file_name[:-4]) 
+        
+    
+    @staticmethod
+    def array_to_binary_file(values, output_file_name=None):
+        #get name of output file and add .bin extension
+        if not output_file_name:
+            output_file_name = input("Enter name of file to store array in (no extensions just the name): ")
+        
+        output_file_name += ".bin"
+        
         bytes_string = bytes(1)
         for value in values:
             bytes_string += int.to_bytes(value, 4, "little", signed=True)
 
         #Write bytes string to file 
-        new_file_name = file_name[:-4] + ".bin"
-        with open(new_file_name, 'wb') as f:
+        with open(output_file_name, 'wb') as f:
             f.write(bytes_string)
 
-        return new_file_name
+        return output_file_name
+
 
 
 
