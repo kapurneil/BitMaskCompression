@@ -1,28 +1,48 @@
-import os
-from utils.filetools import FileReader
+import struct
+from utils.filetools import FileReader, FileConstructor
+
 
 class Encoder:
     @staticmethod
-    def encode_bin_file(file_name):
-        #get file information and values
-        file_size = os.path.getsize(file_name)
-        values_list, max_int = FileReader.list_size_from_decoded(file_name)
-        
-        encoded_bytes = bytes(0)
-        encoded_bytes += Encoder.create_first_byte(values_list, max_int)
+    def encode_bin_file(file_name: str):
+        """
+        Using bitmask encoding, encodes a binary file containing a byte of metadata and numerical values in byte from
 
+        file_name (str): file path to a binary file to be encoded using bit mask encoding
+        """
+        #get values from file
+        values_list = FileReader.list_from_decoded(file_name)
+
+        #get metadata
+        chr_rep = FileReader.metadata_from_binary(file_name)[4]
+
+        #get remainder in last bitmask
+        last_mask_remainder = len(values_list) % 8
+        
+        #Create bytes object to write to file, starting off with first byte which holds metadata
+        encoded_bytes = FileConstructor.create_first_byte(True, chr_rep, last_mask_remainder)
+
+        #iterate through list
         list_index = 0
         while list_index < len(values_list):
+            #create bit mask and bytes object for non-zero elements
             block_bit_mask = ""
             non_zero_bytes = bytes(0)
             for i in range(8):
                 try:
+                    #get element
                     element = values_list[list_index]
+
+                    #add appropriate bit to bit mask
                     block_bit_mask += "0" if element == 0 else "1"
+
+                    #if element is non-zero add in byte form to bytes object 
                     if element != 0:
-                        non_zero_bytes += int(element).to_bytes(max_int, "little", signed=True)
+                        non_zero_bytes += struct.pack(chr_rep, element)
+
                     list_index += 1
                 except IndexError:
+                    #used to handle remainders if list length is not multiple of 8
                     remaining_zeros = 8 - i
                     for j in range(remaining_zeros):
                         block_bit_mask += "0"
@@ -33,22 +53,8 @@ class Encoder:
             encoded_bytes += block_mask_as_bytes
             encoded_bytes += non_zero_bytes
         
+        #write bytes to binary file
         with open(file_name, 'wb') as f:
             f.write(encoded_bytes)
     
-    @staticmethod
-    def create_first_byte(values_list, max_int):
-        binary_string = "1" #left most bit signifies encoded
-
-        #values will be encoded in chunks of 8, last chunk may have less than 8 so first byte specifies this
-        last_values = len(values_list) % 8 
-        binary_string += f'{last_values:03b}'
-
-        #number of bytes stored
-        binary_string += f'{max_int:03b}'
-        
-        #end with a 0
-        binary_string += "0"
-
-        binary_string_as_int = int(binary_string, 2)
-        return binary_string_as_int.to_bytes(1, "little")
+    
