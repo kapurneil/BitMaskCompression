@@ -13,7 +13,7 @@ class Decoder:
         chr_rep = FileReader.metadata_from_binary(file_name)[4]
 
         #get values from encoded file in list form
-        values = FileReader.get_list(file_name)
+        values = FileReader.list_from_encoded(file_name)
 
         #write array to binary file
         FileConstructor.list_to_binary_file(values, chr_rep, file_name)

@@ -61,7 +61,7 @@ class DataHelper:
         return dict_type_from_letter[chr_rep]
     
     _float_letter_from_metadata = ['e', 'f', 'd']
-    _int_letter_from_metadata = ['b' 'h', 'i', 'l']
+    _int_letter_from_metadata = ['b', 'h', 'i', 'l']
 
     @staticmethod
     def letter_from_metadata(is_float: bool, index: int):

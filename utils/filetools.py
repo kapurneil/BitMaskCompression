@@ -104,7 +104,7 @@ class FileReader:
 
         #get bytes from file
         with open(file_name, 'rb') as f:
-            encoded_bytes = f.write()
+            encoded_bytes = f.read()
     
         
         #handle bytes up until last bit mask
@@ -288,7 +288,10 @@ class FileConverter:
         """
 
         #get data from file and store in list
-        values = FileReader.list_from_csv(file_name)
+        is_float = (DataHelper.type_from_letter(chr_rep) == 'float')
+        
+        values = FileReader.list_from_csv(file_name, is_float)
+        
 
         #convert it to binary file 
         return FileConstructor.list_to_binary_file(values, chr_rep, file_name) 
@@ -360,11 +363,11 @@ class FileConstructor:
         byte_string += f'{last_mask_remainder:03b}'
 
         #get number of bytes used to store each number in specified data type
-        num_bytes = struct.calcsize(chr_rep)
-        byte_string += f'{num_bytes:03b}'
+        type_index = DataHelper.metadata_index_from_letter(chr_rep)
+        byte_string += f'{type_index:03b}'
 
         #get whether number is float or integer 
-        data_type = DataHelper.metadata_index_from_letter(chr_rep)
+        data_type = DataHelper.type_from_letter(chr_rep)
 
         #add 1 to end if float or 0 if integer
         if data_type == 'float':

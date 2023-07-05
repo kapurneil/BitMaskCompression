@@ -18,7 +18,12 @@ if __name__ == "__main__":
     elif file_type == "csv":
         #convert to binary
         print("Converting CSV to bin and encoding")
-        new_file = FileConverter.csv_to_binary_file(file_name)
+        try:
+            if sys.argv[2] == 'i':
+                new_file = FileConverter.csv_to_binary_file(file_name, 'i')
+        except IndexError:
+                new_file = FileConverter.csv_to_binary_file(file_name)
+        
         print("Created: " + new_file)
 
         #encode file 

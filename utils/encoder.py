@@ -27,7 +27,11 @@ class Encoder:
         while list_index < len(values_list):
             #create bit mask and bytes object for non-zero elements
             block_bit_mask = ""
+
+            #create an empty bytes object to store non-zero elements
             non_zero_bytes = bytes(0)
+
+            #iterate through 8 elements at a time in the list (each bit mask stores 8 elements)
             for i in range(8):
                 try:
                     #get element
@@ -50,6 +54,8 @@ class Encoder:
             
             #convert bitmask to bytes and add bitmask and list to encoded_bytes
             block_mask_as_bytes = int(block_bit_mask, 2).to_bytes(1, "little")
+
+            #add bit mask followed by non-zero elements to bytes object that will be written to file
             encoded_bytes += block_mask_as_bytes
             encoded_bytes += non_zero_bytes
         
